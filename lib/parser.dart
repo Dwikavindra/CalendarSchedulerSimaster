@@ -39,15 +39,15 @@ class Parser {
           "A.Ma.",
           "A.P"
         ];
-        var isgelar = CleanData.containsTitle(element, gelar);
+        bool isGelar = CleanData.containsTitle(element, gelar);
         bool isInt = CleanData.isInteger(element);
 
         var pushed = element
             .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
             .replaceAll(RegExp('[\\s+]{2,}'), " ")
             .trim(); //remove html tags and whitesapce more than 2
-        if (pushed != "-" && !isgelar && !isInt) {
-          data.add(pushed); //sini langsung add ke list beuh mantap
+        if (pushed != "-" && !isGelar && !isInt) {
+          data.add(pushed);
         }
       });
       print(data);
