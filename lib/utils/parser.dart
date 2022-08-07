@@ -42,13 +42,6 @@ class Parser {
       "|M\\." +
       "| \\.\\.\\.)";
 
-  bool isNumeric(String s) {
-    if (s == null) {
-      return false;
-    }
-    return double.tryParse(s) != null;
-  }
-
   List<String> parseConstantPDFComponents(String text) {
     //for parsing constant PDF components i.e UGM Logo, SKS, Pengajar
     //Words guaranteed to be in the PDF
