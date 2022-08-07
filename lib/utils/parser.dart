@@ -33,7 +33,6 @@ class Parser {
       ")\\s+" // Semua karakter whitespace \r \n \t \f
       +
       "(\\w+)";
-  static const regExReplacer = "(\\b((\\d|\\w)[^\\s]*[.]\\w+)\\b)";
   static const regeExBack = "(S\\.Kom" // Untuk S.Kom
       +
       "|S\\.Pd" +
@@ -48,10 +47,10 @@ class Parser {
     LineSplitter splitter = const LineSplitter();
     List<String> splittedWords =
         splitter.convert(text); //split into a new index every new line
-    splittedWords.removeRange(0, 18); //remove unimportant text at start
+    splittedWords.removeRange(0, 39); //remove unimportant text at start
     splittedWords.removeWhere(((element) => element == "")); //remove blanks
-    splittedWords[3] = splittedWords[3] + " " + splittedWords[4]; //paket Semx
-    splittedWords.removeAt(4);
+    splittedWords.removeLast(); //remove FO.JADWAL KULIAh
+
     return splittedWords;
   }
 
@@ -95,6 +94,14 @@ class Parser {
     return;
   }
 
+  void convertListofListModels(List<String> parsedConstantComponents) {
+    //remove kodematkul from list
+    for (int i = 0; i < parsedConstantComponents.length; i + 5) {
+      parsedConstantComponents[i] = "";
+    }
+    parsedConstantComponents.removeWhere((element) => element == "");
+  }
+
   Future<void> process() async {
     FilePickerResult? pdf = await FilePicker.platform.pickFiles();
     if (pdf != null) {
@@ -102,33 +109,26 @@ class Parser {
       final PdfDocument document = PdfDocument(inputBytes: file.bytes);
       String text = PdfTextExtractor(document).extractText();
       List<String> parsedConstantComponents = parseConstantPDFComponents(text);
-      parsedConstantComponents.forEachIndexed((index, element) {
-        print('index: $index, element: $element');
-      });
       joinTeacherintoOneIndex(parsedConstantComponents);
-      // parsedConstantComponents.forEachIndexed((index, element) {
-      //   if (element.contains(RegExp(regExFront + "|" + regeExBack)) &&
-      //       splittedWords[index + 1]
-      //           .contains(RegExp(regExFront + "|" + regeExBack))) {
-      //     splittedWords[index] =
-      //         splittedWords[index] + " " + splittedWords[index + 1];
-      //     splittedWords.removeAt(index + 1);
-      //   }
-      // });
-      // parsedConstantComponents.forEachIndexed((index, element) {
-      //   if (element.contains(RegExp(regExFront + "|" + regeExBack)) &&
-      //       splittedWords[index + 1]
-      //           .contains(RegExp(regExFront + "|" + regeExBack))) {
-      //     splittedWords[index] =
-      //         splittedWords[index] + " " + splittedWords[index + 1];
-      //     splittedWords.removeAt(index + 1);
-      //   }
-      // });
+      parsedConstantComponents.removeWhere(((element) =>
+          double.tryParse(element) !=
+          null)); // remove all numbers// idk why it doesnt work before aggregation
       parsedConstantComponents.forEachIndexed((index, element) {
         print('index: $index, element: $element');
       });
       var dr = "Drs.";
       print(dr.contains(RegExp('Mr\\.|Drs\\.')));
+      print("parsed with Kode Matkul removed");
+
+      parsedConstantComponents.forEachIndexed((index, element) {
+        print('index: $index, element: $element');
+      });
+
+      //Map each components to a model
     }
   }
 }
+
+/// 1,2,3,4  6,7,8,9  11,12,13,14
+///
+/// skip at 0
