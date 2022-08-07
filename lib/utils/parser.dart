@@ -1,61 +1,85 @@
-import 'dart:typed_data';
-
-import 'event_model.dart';
-import 'package:html/parser.dart';
-import 'dart:async';
 import 'dart:core';
-import 'package:myapp/utils/clean_data.dart';
-import 'data_mapping.dart';
+import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 class Parser {
   Future<void> process() async {
-    List<String> data = [];
-    FilePickerResult? html = await FilePicker.platform.pickFiles();
-    if (html != null) {
-      PlatformFile file = html.files.first;
-      String processed =
-          utf8.decode(file.bytes as Uint8List); //reads data in utf8
-      final processing = """$processed""";
-      final document = parse(processing);
-      var rows =
-          document.getElementsByTagName("table")[0].getElementsByTagName("td");
-      rows.map((e) {
-        // print(e);//this is only the tag for some reason
-        // print(e.innerHtml);//this the inside
-        return e.innerHtml;
-        /*langsung map sini*/
-      }).forEach((element) {
-        List<String> gelar = [
-          "Dr.",
-          "Prof.",
-          "Profs.",
-          "M.",
-          "Drs.",
-          "S.",
-          "Ph.",
-          "A.Md.",
-          "A.Ma.",
-          "A.P"
-        ];
-        bool isGelar = CleanData.containsTitle(element, gelar);
-        bool isInt = CleanData.isInteger(element);
+    String regexReplacer = "(\\b((\\d|\\w)[^\\s]*[.]\\w+)\\b)";
+    String regExFront = "(Dr\\." // Dr. Wahidin
+        +
+        "|DR\\." +
+        "|Drs\\." +
+        "|Ir\\." // Ir. Soekarno
+        +
+        "|Mr\\." // Mr. Yusuf
+        +
+        "|Mrs\\." +
+        "|Ms\\." +
+        "|Jr\\." +
+        "|Sr\\." +
+        "|Prof\\." +
+        "|H\\." // H. Lulung
+        +
+        "|Hj\\." +
+        "|W\\." // Maksum W. Kusumah
+        +
+        "|Tn\\." +
+        "|Ny\\." +
+        "|M\\." // M. Najib
+        +
+        "|H\\.M\\." // H.M. Prasetyo
+        +
+        ")\\s+" // Semua karakter whitespace \r \n \t \f
+        +
+        "(\\w+)";
 
-        var pushed = element
-            .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
-            .replaceAll(RegExp('[\\s+]{2,}'), " ")
-            .trim(); //remove html tags and whitesapce more than 2
-        if (pushed != "-" && !isGelar && !isInt) {
-          data.add(pushed);
+    String regExBack = "(S\\.Kom" // Untuk S.Kom
+        +
+        "|S\\.Pd" +
+        "|S\\.Sos" // HM Husni Maderi S.Sos
+        +
+        "|ßM\\." +
+        "| \\.\\.\\.)";
+
+    FilePickerResult? pdf = await FilePicker.platform.pickFiles();
+    if (pdf != null) {
+      PlatformFile file = pdf.files.first;
+      final PdfDocument document = PdfDocument(inputBytes: file.bytes);
+      String text = PdfTextExtractor(document).extractText();
+      final List<TextLine> textLine =
+          PdfTextExtractor(document).extractTextLines();
+      print(text);
+      LineSplitter splitter = const LineSplitter();
+      List<String> splittedWords = splitter.convert(text);
+      splittedWords.removeRange(0, 18);
+      splittedWords.removeWhere(((element) => element == ""));
+      splittedWords[3] = splittedWords[3] + " " + splittedWords[4];
+      splittedWords.forEachIndexed((index, element) {
+        if (element.contains(RegExp(regExFront + "|" + regExBack)) &&
+            splittedWords[index + 1]
+                .contains(RegExp(regExFront + "|" + regExBack))) {
+          splittedWords[index] =
+              splittedWords[index] + " " + splittedWords[index + 1];
+          splittedWords.removeAt(index + 1);
         }
       });
-      print(data);
-      DataMapping mappedData = DataMapping(data);
-
-      List<Event_Model> events = mappedData.mapData();
-      print(events);
-      print(events.length);
+      splittedWords.forEachIndexed((index, element) {
+        if (element.contains(RegExp(regExFront + "|" + regExBack)) &&
+            splittedWords[index + 1]
+                .contains(RegExp(regExFront + "|" + regExBack))) {
+          splittedWords[index] =
+              splittedWords[index] + " " + splittedWords[index + 1];
+          splittedWords.removeAt(index + 1);
+        }
+      });
+      splittedWords.forEachIndexed((index, element) {
+        print('index: $index, element: $element');
+      });
+      print(splittedWords);
+      var dr = "Drs.";
+      print(dr.contains(RegExp('Mr\\.|Drs\\.')));
     }
   }
 }
