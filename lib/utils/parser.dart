@@ -4,7 +4,7 @@ import 'event_model.dart';
 import 'package:html/parser.dart';
 import 'dart:async';
 import 'dart:core';
-import 'package:myapp/clean_data.dart';
+import 'package:myapp/utils/clean_data.dart';
 import 'data_mapping.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:convert';
@@ -54,6 +54,7 @@ class Parser {
       DataMapping mappedData = DataMapping(data);
 
       List<Event_Model> events = mappedData.mapData();
+      print(events);
       print(events.length);
     }
   }

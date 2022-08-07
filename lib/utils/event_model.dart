@@ -9,8 +9,4 @@ class Event_Model {
       required this.start_day,
       required this.start_time,
       required this.end_time});
-
-  int get getStartDay {
-    return int.parse(start_day);
-  }
 }
