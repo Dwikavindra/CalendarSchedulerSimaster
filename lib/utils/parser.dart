@@ -5,6 +5,12 @@ import 'package:flutter/widgets.dart';
 import 'dart:convert';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
+//TODO:
+//Agregate Mata Kuliah with limiter being if gelar is recognized then stop and agregate
+//use the same method as to agregate teachers
+// After which remove kode matkul
+//Done
+
 class Parser {
   static const regExFront = "(Dr\\." // Dr. Wahidin
       +
@@ -39,6 +45,9 @@ class Parser {
       "|S\\.Sos" // HM Husni Maderi S.Sos
       +
       "|M\\." +
+      "|B\\." +
+      "|PhD" +
+      "|Ph.\\D" +
       "| \\.\\.\\.)";
 
   List<String> parseConstantPDFComponents(String text) {
@@ -47,10 +56,24 @@ class Parser {
     LineSplitter splitter = const LineSplitter();
     List<String> splittedWords =
         splitter.convert(text); //split into a new index every new line
-    splittedWords.removeRange(0, 39); //remove unimportant text at start
-    splittedWords.removeWhere(((element) => element == "")); //remove blanks
+    splittedWords.removeWhere(((element) =>
+        double.tryParse(element) !=
+        null)); // remove all numbers// idk why it doesnt work before aggregation
+    splittedWords.removeRange(0, 18); //remove unimportant text at start
     splittedWords.removeLast(); //remove FO.JADWAL KULIAh
+    splittedWords.removeWhere(((element) => element == "")); //remove blanks
+    splittedWords
+        .removeWhere(((element) => element.contains("Kelas:"))); //remove blanks
+    splittedWords.removeWhere((element) => element == "No");
+    splittedWords.removeWhere((element) => element == "Paket");
+    splittedWords.removeWhere((element) => element == "SkS");
+    splittedWords.removeWhere((element) => element == "Sem");
+    splittedWords.removeWhere((element) => element == "SKS");
 
+    print("Splitted Words after unnecessary removed ");
+    splittedWords.forEachIndexed((index, element) {
+      print('index: $index, element: $element');
+    });
     return splittedWords;
   }
 
@@ -68,38 +91,25 @@ class Parser {
         recursiveFindTeacher(i, parsedConstantComponents,
             i + 1); //check full with name and title
       }
-      //check if the title in the back of the name  is somehow not aggregated
-      if (parsedConstantComponents[i].contains(RegExp(regeExBack)) &&
-          double.tryParse(parsedConstantComponents[i - 1]) == null) {
-        parsedConstantComponents[i - 1] += parsedConstantComponents[i];
-        parsedConstantComponents.removeAt(i);
-      }
     }
   }
 
   void recursiveFindTeacher(
       int firstHitIndex, List<String> parsedConstantComponents, int n_index) {
+    print("this is parsed n_index " + parsedConstantComponents[n_index]);
     // firsthitindex ga mungkin 0 soalnya ketemu di if statement di atas pas for loop;
     if (parsedConstantComponents[n_index]
-        .contains(RegExp(regExFront + "|" + regeExBack))) {
+            .contains(RegExp(regExFront + "|" + regeExBack)) ==
+        false) {
+      return;
+    } else {
       parsedConstantComponents[firstHitIndex] =
           parsedConstantComponents[firstHitIndex] +
-              "! " +
+              "!" +
               parsedConstantComponents[n_index];
       parsedConstantComponents.removeAt(n_index);
-      recursiveFindTeacher(
-          firstHitIndex, parsedConstantComponents, n_index + 1);
+      recursiveFindTeacher(firstHitIndex, parsedConstantComponents, n_index);
     }
-
-    return;
-  }
-
-  void convertListofListModels(List<String> parsedConstantComponents) {
-    //remove kodematkul from list
-    for (int i = 0; i < parsedConstantComponents.length; i + 5) {
-      parsedConstantComponents[i] = "";
-    }
-    parsedConstantComponents.removeWhere((element) => element == "");
   }
 
   Future<void> process() async {
@@ -113,21 +123,25 @@ class Parser {
       parsedConstantComponents.removeWhere(((element) =>
           double.tryParse(element) !=
           null)); // remove all numbers// idk why it doesnt work before aggregation
-      parsedConstantComponents.forEachIndexed((index, element) {
-        print('index: $index, element: $element');
-      });
-      var dr = "Drs.";
-      print(dr.contains(RegExp('Mr\\.|Drs\\.')));
-      print("parsed with Kode Matkul removed");
 
+      //parsed without sks removed
       parsedConstantComponents.forEachIndexed((index, element) {
         print('index: $index, element: $element');
       });
+      print("\n");
+      print("With Kode Matkul joined \n ");
+      print("\n");
+      parsedConstantComponents.forEachIndexed((index, element) {
+        print('index: $index, element: $element');
+      });
+      String gelar = "M.Sc., M.Cs.";
+      print(gelar.contains(RegExp(regExFront + "|" + regeExBack)));
 
       //Map each components to a model
     }
   }
 }
+// we cant do this locally to many edge cases
 
 /// 1,2,3,4  6,7,8,9  11,12,13,14
 ///
