@@ -56,19 +56,28 @@ class Parser {
     LineSplitter splitter = const LineSplitter();
     List<String> splittedWords =
         splitter.convert(text); //split into a new index every new line
-    splittedWords.removeWhere(((element) =>
-        double.tryParse(element) !=
-        null)); // remove all numbers// idk why it doesnt work before aggregation
-    splittedWords.removeRange(0, 18); //remove unimportant text at start
-    splittedWords.removeLast(); //remove FO.JADWAL KULIAh
-    splittedWords.removeWhere(((element) => element == "")); //remove blanks
-    splittedWords
-        .removeWhere(((element) => element.contains("Kelas:"))); //remove blanks
+    print("In parse Constant Components");
+    splittedWords.forEachIndexed((index, element) {
+      print('index: $index, element: $element');
+    });
+    splittedWords.removeWhere(
+        ((element) => double.tryParse(element) != null)); // remove all numbers
+
+    splittedWords.removeWhere(((element) => element.contains("Kelas:")));
     splittedWords.removeWhere((element) => element == "No");
     splittedWords.removeWhere((element) => element == "Paket");
     splittedWords.removeWhere((element) => element == "SkS");
     splittedWords.removeWhere((element) => element == "Sem");
     splittedWords.removeWhere((element) => element == "SKS");
+    splittedWords
+        .removeWhere((element) => element == "UNIVERSITAS GADJAH MADA");
+    splittedWords.removeWhere((element) => element == "JADWAL KULIAH");
+    splittedWords.removeWhere((element) =>
+        element.contains("Semester Gasal") ||
+        element.contains("Semester Genap"));
+    splittedWords.removeWhere(((element) => element == "[FO.JADWAL KULIAH]"));
+    splittedWords.removeWhere((element) => element.contains("FAKULTAS"));
+    splittedWords.removeWhere(((element) => element == "")); //remove blanks
 
     print("Splitted Words after unnecessary removed ");
     splittedWords.forEachIndexed((index, element) {
@@ -119,6 +128,10 @@ class Parser {
       final PdfDocument document = PdfDocument(inputBytes: file.bytes);
       String text = PdfTextExtractor(document).extractText();
       List<String> parsedConstantComponents = parseConstantPDFComponents(text);
+      print("Before join teacher");
+      parsedConstantComponents.forEachIndexed((index, element) {
+        print('index: $index, element: $element');
+      });
       joinTeacherintoOneIndex(parsedConstantComponents);
       parsedConstantComponents.removeWhere(((element) =>
           double.tryParse(element) !=
